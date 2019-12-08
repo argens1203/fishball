@@ -1,38 +1,23 @@
-import AWS from "aws-sdk";
-AWS.config.update({region: process.env.region});
-const docClient = new AWS.DynamoDB.DocumentClient({apiVersion: '2012-08-10'});
+import dynamoDB from "../lib/dynamo-lib";
+import {Success, Failure} from "../lib/response-lib";
 
-const success = msg => {
-  const obj = typeof msg === "string" ? {
-    message: msg
-  } : msg;
-  return {
-    statusCode: 200,
-    body: JSON.stringify(obj),
-  };
-};
 
 export const addOrder = async (event, context) => {
   console.log(event);
   try {
     const {productId, amount} = JSON.parse(event.body);
     const orderId = "12345";
-    docClient.put({
+    const res = await dynamoDB.put({
       TableName: process.env.OrderTable,
       Item: {
         orderId,
         productId,
         amount
       }
-    }, (err, data) => {
-      if (err){
-        console.log(err);
-      } else {
-        console.log(data);
-      }
-    });
+    }).promise();
+    return (Success(res));
   } catch (e){
     console.log(e);
-    return success(e);
+    return Failure(e);
   }
 };
